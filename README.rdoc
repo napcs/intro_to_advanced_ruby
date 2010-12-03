@@ -1,0 +1,27 @@
+==Introduction to Advanced Ruby
+
+The Ruby programming language is really powerful, but if you don't dig too deep beyond what basic Rails applications can do, you'll miss out on a lot of useful tools that you could be using to make your apps better.
+
+This repository has code examples that attempt to explain these basic concepts. Each example has tests so you know things are working properly.
+
+We'll cover
+
+* send and respond_to?
+* Blocks
+* Lambdas
+* Adding methods with monkeypatches vs modules
+* Overriding methods with monkeypatching vs modules
+* Putting it all together, using these elements to build an "interface" 
+
+Each file in this repository has detailed comments
+that walk you through the concepts, followed by tests and code that
+you can explore.
+
+==License
+
+MIT. Copyright 2010 Brian P. Hogan. See the license file.
+
+Also, this code is for demonstration purposes. There's nothing production-ready in this repository.
+
+
+
