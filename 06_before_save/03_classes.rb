@@ -43,8 +43,8 @@ class BeforeSaveTest < Test::Unit::TestCase
   def test_should_take_a_class
     Person.send :before_save,  SuperFilter
     p = Person.new
+    SuperFilter.expects(:call)
     p.save
-    assert_not_nil p.name
   end
   
   def test_should_take_method_lambda_and_class
@@ -53,43 +53,54 @@ class BeforeSaveTest < Test::Unit::TestCase
     p.expects(:foo)
     SuperFilter.expects(:call)
     p.save
+    assert "test", p.name
   end
   
 end
 
 class Record
-  class << self
-    attr_accessor :callbacks
-    def before_save(*args)
-       self.callbacks = args
-    end
-  end
+  def self.callbacks
+    @callbacks
+  end  
   
+  def self.before_save(*args)
+    @callbacks = args
+  end
+
   def save
-    self.class.callbacks.each do |c| 
-      if c.is_a? Symbol
-        self.send c if self.respond_to?(c)
+    self.class.callbacks.each do |callback| 
+      if callback.is_a? Symbol
+        self.send callback if self.respond_to? callback
       else
-        c.call(self)
+        callback.call(self)
       end
     end
     puts "Saved"
   end
 end
 
-class Person < Record
-   attr_accessor :name
-   
-end
-
 class SuperFilter
   def self.call(object)
     @object = object
-    self.set_name
+    self.log
   end
   
-  def self.set_name
-    @object.name = "Foo"
+  def self.log
+    puts "Called Superfilter on #{@object.class.to_s}"
   end
 end
 
+class Person < Record
+   attr_accessor :name
+   before_save :foo, lambda{|p| p.name = "test"}, SuperFilter
+   
+   def foo
+     puts "called foo before save"
+   end
+   
+end
+
+
+p = Person.new
+p.save
+puts p.name

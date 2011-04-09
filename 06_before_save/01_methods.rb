@@ -44,24 +44,37 @@ class BeforeSaveTest < Test::Unit::TestCase
   
 end
 
+
 class Record
-  class << self
-    
-    attr_accessor :callbacks
-    
-    def before_save(*args)
-       self.callbacks = args
-    end
-    
-    
+  def self.callbacks
+    @callbacks
   end
   
-  def save
-    self.class.callbacks.each{|c| self.send c if self.respond_to? c}
-    puts "Saved"
+  def self.before_save(*args)
+    @callbacks = args
   end
+
+  def save
+    self.class.callbacks.each do |callback|
+      self.send callback if self.respond_to? callback
+    end
+    puts "Saved"
+  end  
+  
 end
 
 class Person < Record
-
+  attr_accessor :name, :approve
+  before_save :foo, :bar
+  
+  def foo
+    puts "called foo before save"
+  end
+  
+  def bar
+    puts "called bar before save"
+  end
 end
+
+p = Person.new
+p.save

@@ -41,30 +41,32 @@ class BeforeSaveTest < Test::Unit::TestCase
   end
   
   def test_should_take_lambda
-    Person.send :before_save,  lambda{|p| p.approve = false}
+    Person.send :before_save,  lambda{|p| p.name = "test"}
     
     p = Person.new
-    assert_nil p.approve
+    assert_nil p.name
     p.save
-    assert_equal false, p.approve
+    assert_equal "test", p.name
   end
   
 end
 
 class Record
-  class << self
-    attr_accessor :callbacks
-    def before_save(*args)
-       self.callbacks = args
-    end
-  end
+
+  def self.callbacks
+    @callbacks
+  end  
   
+  def self.before_save(*args)
+    @callbacks = args
+  end
+
   def save
-    self.class.callbacks.each do |c| 
-      if c.is_a? Symbol
-        self.send c if self.respond_to?(c)
+    self.class.callbacks.each do |callback| 
+      if callback.is_a? Symbol
+        self.send callback if self.respond_to? callback
       else
-        c.call(self)
+        callback.call(self)
       end
     end
     puts "Saved"
@@ -72,5 +74,16 @@ class Record
 end
 
 class Person < Record
-  attr_accessor :name, :approve
+  attr_accessor :name
+  before_save :foo, lambda{|p| p.name = "test"}
+ 
+  def foo
+   puts "called foo before save"
+  end
+
 end
+
+p = Person.new
+p.save
+puts p.name
+
