@@ -42,8 +42,12 @@
 # 
 #   class Person
 #     
-#     @@number_of_people
+#     @@number_of_people = 0
 #     
+#     def self.number_of_people
+#       @@number_of_people
+#     end
+#
 #     def initialize
 #       @@number_of_people += 1
 #     end
@@ -166,7 +170,7 @@ class Record
 end
 
 class Person < Record
-  
+
 end
 
 class Note < Record

@@ -33,11 +33,10 @@ class BeforeSaveTest < Test::Unit::TestCase
   
   def test_should_invoke_defined_bar_method_when_specified
     
-    Person.send :before_save, :bar, :foo
+    Person.send :before_save, :bar
     
     p = Person.new
     p.expects(:bar)
-    p.expects(:foo)
     p.save
     
   end

@@ -59,11 +59,10 @@ class BeforeSaveTest < Test::Unit::TestCase
   
   def test_should_invoke_defined_bar_method_when_specified
     
-    Person.send :before_save, :bar, :foo
+    Person.send :before_save, :bar
     
     p = Person.new
     p.expects(:bar)
-    p.expects(:foo)
     p.save
     
   end
@@ -80,17 +79,18 @@ class BeforeSaveTest < Test::Unit::TestCase
   def test_should_take_a_class
     Person.send :before_save,  SuperFilter
     p = Person.new
-    SuperFilter.expects(:call)
     p.save
+    assert_not_nil p.updated_at
   end
   
   def test_should_take_method_lambda_and_class
     Person.send :before_save, :foo, lambda{|p| p.name = "test"}, SuperFilter
     p = Person.new
     p.expects(:foo)
-    SuperFilter.expects(:call)
     p.save
     assert "test", p.name
+    assert_not_nil p.updated_at
+
   end
   
 end
@@ -103,12 +103,12 @@ end
 
 class SuperFilter
   def self.call(object)
-    @object = object
-    self.log
+    object.updated_at = Time.now if object.respond_to? :updated_at
+    self.log(object)
   end
   
-  def self.log
-    puts "Called Superfilter on #{@object.class.to_s}"
+  def self.log(object)
+    puts "Called Superfilter on #{object.class.to_s}"
   end
 end
 
@@ -116,15 +116,17 @@ module BeforeSaveCallbacks
   
   module ClassMethods
     attr_accessor :callbacks
+    
     def before_save(*args)
        self.callbacks = args
     end
   end
   
   def self.included(base)
+    base.extend BeforeSaveCallbacks::ClassMethods
     base.class_eval do
       
-      base.extend BeforeSaveCallbacks::ClassMethods
+      alias_method :original_save, :save
       
       def save
         self.class.callbacks.each do |c| 
@@ -133,7 +135,7 @@ module BeforeSaveCallbacks
           else
             c.call(self)
           end
-        end unless self.class.callbacks.nil?
+        end        
       end
     end
   end
@@ -145,7 +147,7 @@ Record.send :include, BeforeSaveCallbacks
 ##################
 
 class Person < Record
-   attr_accessor :name
+   attr_accessor :name, :updated_at
    before_save :foo, lambda{ puts "called lambda at #{Time.now}" }, SuperFilter
    
    def foo
