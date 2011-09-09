@@ -56,59 +56,31 @@ require 'mocha'
 
 
 class BeforeSaveTest < Test::Unit::TestCase
-  
-  def test_should_invoke_defined_bar_method_when_specified
-    
-    Person.send :before_save, :bar
-    
+
+  def test_should_invoke_method_before_save_to_set_
     p = Person.new
-    p.expects(:bar)
     p.save
-    
+    assert p.active    
   end
-  
-  def test_should_take_lambda
-    Person.send :before_save,  lambda{|p| p.name = "test"}
-    
+
+  def test_should_take_lambda_that_sets_name_to_test    
     p = Person.new
-    assert_nil p.name
     p.save
     assert_equal "test", p.name
   end
-  
-  def test_should_take_a_class
-    Person.send :before_save,  SuperFilter
-    p = Person.new
-    p.save
-    assert_not_nil p.updated_at
-  end
-  
-  def test_should_take_method_lambda_and_class
-    Person.send :before_save, :foo, lambda{|p| p.name = "test"}, SuperFilter
-    p = Person.new
-    p.expects(:foo)
-    p.save
-    assert "test", p.name
-    assert_not_nil p.updated_at
 
+  def test_should_use_a_class_to_set_updated_at_field
+    p = Person.new
+    p.save
+    assert_not_nil p.updated_at
   end
-  
+
 end
+ 
 
 class Record
   def save
     puts "Saved!"
-  end
-end
-
-class SuperFilter
-  def self.call(object)
-    object.updated_at = Time.now if object.respond_to? :updated_at
-    self.log(object)
-  end
-  
-  def self.log(object)
-    puts "Called Superfilter on #{object.class.to_s}"
   end
 end
 
@@ -144,15 +116,35 @@ end
 
 Record.send :include, BeforeSaveCallbacks
 
+class LogFilter
+  def self.call(object)
+    LogFilter.new(object)
+  end
+  
+  def initialize(object)
+    @object = object
+    log
+    set_updated_at
+  end
+  
+  def set_updated_at
+    @object.updated_at = Time.now if @object.respond_to? :updated_at
+  end
+  
+  def log
+    puts "Called LogFilter on #{@object.class.to_s}"
+  end
+end
+
 ##################
 
 class Person < Record
-   attr_accessor :name, :updated_at
-   before_save :foo, lambda{ puts "called lambda at #{Time.now}" }, SuperFilter
-   
-   def foo
-     puts "called foo before save"
-   end
+  attr_accessor :name, :active, :updated_at
+  before_save :set_active, lambda{|p| p.name = "test"}, LogFilter
+  
+  def set_active
+    self.active = true
+  end
 end
 
 p = Person.new

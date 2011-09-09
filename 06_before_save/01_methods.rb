@@ -11,7 +11,7 @@
 #
 #  When we call
 #  
-#    p = Person.save
+#    p = Person.new
 #    p.save
 # 
 # then we want <tt>foo</tt> to fire, then <tt>bar</tt>.
@@ -26,19 +26,13 @@
 
 require 'rubygems'
 require 'test/unit'
-require 'mocha'
-
 
 class BeforeSaveTest < Test::Unit::TestCase
   
-  def test_should_invoke_defined_bar_method_when_specified
-    
-    Person.send :before_save, :bar
-    
+  def test_should_invoke_method_before_save_to_set_
     p = Person.new
-    p.expects(:bar)
     p.save
-    
+    assert p.active    
   end
   
 end
@@ -55,7 +49,7 @@ class Record
 
   def save
     self.class.callbacks.each do |callback|
-      self.send callback if self.respond_to? callback
+     self.send callback if self.respond_to? callback
     end
     puts "Saved"
   end  
@@ -63,16 +57,13 @@ class Record
 end
 
 class Person < Record
-  attr_accessor :name, :approve
-  before_save :foo, :bar
+  attr_accessor :name, :active
+  before_save :set_active
   
-  def foo
-    puts "called foo before save"
+  def set_active
+    self.active = true
   end
   
-  def bar
-    puts "called bar before save"
-  end
 end
 
 p = Person.new

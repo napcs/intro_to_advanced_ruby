@@ -24,26 +24,18 @@
 
 require 'rubygems'
 require 'test/unit'
-require 'mocha'
 
 
 class BeforeSaveTest < Test::Unit::TestCase
   
-  def test_should_invoke_defined_bar_method_when_specified
-    
-    Person.send :before_save, :bar
-    
+  def test_should_invoke_method_before_save_to_set_
     p = Person.new
-    p.expects(:bar)
     p.save
-    
+    assert p.active    
   end
   
-  def test_should_take_lambda
-    Person.send :before_save,  lambda{|p| p.name = "test"}
-    
+  def test_should_take_lambda_that_sets_name_to_test    
     p = Person.new
-    assert_nil p.name
     p.save
     assert_equal "test", p.name
   end
@@ -73,11 +65,11 @@ class Record
 end
 
 class Person < Record
-  attr_accessor :name
-  before_save :foo, :bar, lambda{|p| p.name = "test"}
+  attr_accessor :name, :active
+  before_save :set_active, lambda{|p| p.name = "test"}
  
-  def foo
-   puts "called foo before save"
+  def set_active
+    self.active = true
   end
 
 end
